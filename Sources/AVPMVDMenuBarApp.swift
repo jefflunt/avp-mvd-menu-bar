@@ -1,0 +1,65 @@
+import SwiftUI
+import AppKit
+
+@main
+struct AVPMVDMenuBarApp: App {
+    @StateObject private var watcher = AVPMVDWatcher()
+    
+    init() {
+        // Dynamically hide Dock icon and run only in the menu bar
+        NSApplication.shared.setActivationPolicy(.accessory)
+    }
+    
+    var body: some Scene {
+        MenuBarExtra {
+            Text("Mac Virtual Display Status")
+            
+            Divider()
+            
+            // Bluetooth Status Item
+            if watcher.isBluetoothOnline {
+                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Bluetooth: Online")
+            } else {
+                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.red)) Bluetooth: Offline/Starting")
+            }
+            
+            // Wi-Fi Status Item
+            if watcher.isWifiOnline {
+                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Wi-Fi: Online (\(watcher.wifiIPAddress ?? "Unknown IP"))")
+            } else {
+                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.red)) Wi-Fi: No IP Address")
+            }
+            
+            // Keychain Status Item
+            if watcher.isKeychainActive {
+                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Keychain: Active")
+            } else {
+                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.red)) Keychain: Starting")
+            }
+            
+            Divider()
+            
+            // Last checked time
+            if !watcher.lastCheckTimeString.isEmpty {
+                Text("Last Checked: \(watcher.lastCheckTimeString)")
+            }
+            
+            Button(watcher.isChecking ? "Checking..." : "Check Now") {
+                Task {
+                    await watcher.runCheck()
+                }
+            }
+            .disabled(watcher.isChecking)
+            
+            Divider()
+            
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .keyboardShortcut("q")
+            
+        } label: {
+            Image(systemName: watcher.menuBarIcon)
+        }
+    }
+}
