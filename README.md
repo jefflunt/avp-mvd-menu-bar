@@ -1,7 +1,7 @@
 # AVP MVD Watcher Menu Bar
 
 <p align="center">
-  <img src="images/app-icon.png" alt="AVP MVD Watcher Menu Bar Icon" width="128" />
+  <img src="images/app-icon.png" alt="AVP MVD Watcher Menu Bar Icon" width="600" />
 </p>
 
 <p align="center">
