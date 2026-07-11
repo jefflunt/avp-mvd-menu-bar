@@ -3,6 +3,9 @@ import Combine
 import IOBluetooth
 import CoreWLAN
 import Security
+import CoreBluetooth
+import Network
+import AppKit
 
 @MainActor
 public class AVPMVDWatcher: ObservableObject {
@@ -18,9 +21,6 @@ public class AVPMVDWatcher: ObservableObject {
     // Derived UI states
     @Published public var menuBarIcon: String = "visionpro"
     
-    private var timer: Timer? = nil
-    private var currentInterval: TimeInterval = 30.0
-    
     public var lastCheckTimeString: String {
         guard let lastTime = lastCheckTime else { return "" }
         let formatter = DateFormatter()
@@ -28,8 +28,14 @@ public class AVPMVDWatcher: ObservableObject {
         return formatter.string(from: lastTime)
     }
     
+    // Observers and monitors
+    private var bluetoothObserver: BluetoothObserver?
+    private let pathMonitor = NWPathMonitor(requiredInterfaceType: .wifi)
+    private var notificationObservers: [Any] = []
+    
     public init() {
-        startTimer()
+        setupObservers()
+        
         // Trigger initial check immediately
         Task {
             await runCheck()
@@ -37,15 +43,74 @@ public class AVPMVDWatcher: ObservableObject {
     }
     
     deinit {
-        timer?.invalidate()
+        pathMonitor.cancel()
+        for observer in notificationObservers {
+            DistributedNotificationCenter.default().removeObserver(observer)
+        }
     }
     
-    public func startTimer() {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: currentInterval, repeats: true) { [weak self] _ in
-            Task {
-                await self?.runCheck()
+    private func setupObservers() {
+        // 1. Bluetooth Observer
+        bluetoothObserver = BluetoothObserver { [weak self] isOnline in
+            guard let self = self else { return }
+            self.isBluetoothOnline = isOnline
+            self.lastCheckTime = Date()
+            self.updateMenuBarIcon()
+        }
+        
+        // 2. Wi-Fi / IP Address Observer
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            guard let self = self else { return }
+            let isPathSatisfied = path.status == .satisfied
+            
+            Task { @MainActor in
+                let wifiInterfaceName = CWWiFiClient.shared().interface()?.interfaceName ?? "en0"
+                let ip = isPathSatisfied ? Self.getIPAddress(for: wifiInterfaceName) : nil
+                self.isWifiOnline = (ip != nil)
+                self.wifiIPAddress = ip
+                self.lastCheckTime = Date()
+                self.updateMenuBarIcon()
             }
+        }
+        pathMonitor.start(queue: DispatchQueue.global(qos: .background))
+        
+        // 3. Keychain Availability Observers (screen lock/unlock notifications)
+        let dnc = DistributedNotificationCenter.default()
+        let o1 = dnc.addObserver(
+            forName: NSNotification.Name("com.apple.screenIsUnlocked"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                self.isKeychainActive = Self.checkKeychainActive()
+                self.lastCheckTime = Date()
+                self.updateMenuBarIcon()
+            }
+        }
+        notificationObservers.append(o1)
+        
+        let o2 = dnc.addObserver(
+            forName: NSNotification.Name("com.apple.screenIsLocked"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                self.isKeychainActive = false
+                self.lastCheckTime = Date()
+                self.updateMenuBarIcon()
+            }
+        }
+        notificationObservers.append(o2)
+    }
+    
+    public func updateMenuBarIcon() {
+        let allSystemsGo = isBluetoothOnline && isWifiOnline && isKeychainActive
+        if allSystemsGo {
+            menuBarIcon = "visionpro"
+        } else {
+            menuBarIcon = "visionpro.badge.exclamationmark"
         }
     }
     
@@ -75,20 +140,7 @@ public class AVPMVDWatcher: ObservableObject {
         self.lastCheckTime = Date()
         self.isChecking = false
         
-        // Determine icon based on status
-        let allSystemsGo = self.isBluetoothOnline && self.isWifiOnline && self.isKeychainActive
-        if allSystemsGo {
-            self.menuBarIcon = "visionpro"
-        } else {
-            self.menuBarIcon = "visionpro.badge.exclamationmark"
-        }
-        
-        // Adjust polling interval dynamically based on health status
-        let newInterval: TimeInterval = allSystemsGo ? 30.0 : 10.0
-        if newInterval != currentInterval {
-            currentInterval = newInterval
-            startTimer()
-        }
+        self.updateMenuBarIcon()
     }
     
     // Helpers (Marked nonisolated so they can run safely in Task.detached)
@@ -126,5 +178,24 @@ public class AVPMVDWatcher: ObservableObject {
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         return status == errSecSuccess || status == errSecItemNotFound
+    }
+}
+
+@MainActor
+private class BluetoothObserver: NSObject, CBCentralManagerDelegate {
+    private var centralManager: CBCentralManager?
+    private let onStateChanged: @Sendable @MainActor (Bool) -> Void
+    
+    init(onStateChanged: @escaping @Sendable @MainActor (Bool) -> Void) {
+        self.onStateChanged = onStateChanged
+        super.init()
+        self.centralManager = CBCentralManager(delegate: self, queue: .main)
+    }
+    
+    nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        Task { @MainActor in
+            let isOnline = central.state == .poweredOn
+            onStateChanged(isOnline)
+        }
     }
 }
