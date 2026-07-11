@@ -10,12 +10,19 @@ swift build -c release
 APP_DIR=".build/release/AVPMVDMenuBar.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
+RESOURCES_DIR="$CONTENTS_DIR/Resources"
 
 echo "Creating App Bundle structure for 'AVPMVDMenuBar'..."
 mkdir -p "$MACOS_DIR"
+mkdir -p "$RESOURCES_DIR"
 
 echo "Copying binary to App Bundle..."
 cp ".build/release/AVPMVDMenuBar" "$MACOS_DIR/AVPMVDMenuBar"
+
+if [ -f "Resources/AppIcon.icns" ]; then
+    echo "Copying AppIcon.icns to App Bundle..."
+    cp "Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
+fi
 
 echo "Writing Info.plist..."
 cat <<EOF > "$CONTENTS_DIR/Info.plist"
@@ -37,6 +44,8 @@ cat <<EOF > "$CONTENTS_DIR/Info.plist"
     <string>1.0.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>LSUIElement</key>
     <true/>
     <key>LSMinimumSystemVersion</key>
