@@ -1,6 +1,12 @@
 # AVP MVD Watcher Menu Bar
 
-![AVP MVD Watcher Menu Bar Screenshot](images/avp-mvd-screenshot.png)
+<p align="center">
+  <img src="images/app-icon.png" alt="AVP MVD Watcher Menu Bar Icon" width="128" />
+</p>
+
+<p align="center">
+  <img src="images/avp-mvd-screenshot.png" alt="AVP MVD Watcher Menu Bar Screenshot" width="600" />
+</p>
 
 A native macOS menu bar utility built in SwiftUI that displays whether your Mac is ready to connect to the Apple Vision Pro (AVP) feature **Mac Virtual Display (MVD)**.
 
