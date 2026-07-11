@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Navigate to the repository root
+cd "$(dirname "$0")/.."
+
 echo "Building AVP MVD Watcher Menu Bar in release mode..."
 swift build -c release
 
