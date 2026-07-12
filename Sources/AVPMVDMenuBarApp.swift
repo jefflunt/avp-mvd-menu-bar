@@ -4,6 +4,7 @@ import AppKit
 @main
 struct AVPMVDMenuBarApp: App {
     @StateObject private var watcher = AVPMVDWatcher()
+    private let appVersion = "v1"
     
     init() {
         // Dynamically hide Dock icon and run only in the menu bar
@@ -12,7 +13,7 @@ struct AVPMVDMenuBarApp: App {
     
     var body: some Scene {
         MenuBarExtra {
-            Text("Mac Virtual Display Status")
+            Text("Mac Virtual Display Readiness")
             
             Divider()
             
@@ -52,6 +53,8 @@ struct AVPMVDMenuBarApp: App {
             .disabled(watcher.isChecking)
             
             Divider()
+            
+            Text("Version: \(appVersion)")
             
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
