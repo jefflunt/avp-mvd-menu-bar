@@ -4,7 +4,7 @@ import AppKit
 @main
 struct AVPMVDMenuBarApp: App {
     @StateObject private var watcher = AVPMVDWatcher()
-    private let appVersion = "v1"
+    private let appVersion = "v9"
     
     init() {
         // Dynamically hide Dock icon and run only in the menu bar
@@ -54,7 +54,7 @@ struct AVPMVDMenuBarApp: App {
             
             Divider()
             
-            Text("Version: \(appVersion)")
+            Text(appVersion)
             
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
