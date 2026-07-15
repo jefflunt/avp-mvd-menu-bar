@@ -4,13 +4,13 @@ set -e
 # Navigate to the repository root
 cd "$(dirname "$0")/.."
 
-APP_PATH=".build/release/AVPMVDMenuBar.app"
+echo "Running packaging script..."
+./scripts/package.sh
 
-# Build/package first if it does not exist
-if [ ! -d "$APP_PATH" ]; then
-    echo "Application not built yet. Running packaging script..."
-    ./scripts/package.sh
-fi
+echo "Killing any running version of AVPMVDMenuBar..."
+pkill -x "AVPMVDMenuBar" || true
+
+APP_PATH=".build/release/AVPMVDMenuBar.app"
 
 echo "Installing AVPMVDMenuBar to /Applications..."
 
@@ -25,6 +25,9 @@ else
     sudo cp -R "$APP_PATH" "/Applications/"
 fi
 
+echo "Starting AVPMVDMenuBar..."
+open "/Applications/AVPMVDMenuBar.app"
+
 echo "Adding AVPMVDMenuBar to system Login Items..."
 if osascript -e 'tell application "System Events" to if exists login item "AVPMVDMenuBar" then delete login item "AVPMVDMenuBar"' && \
    osascript -e 'tell application "System Events" to make new login item at end with properties {name: "AVPMVDMenuBar", path: "/Applications/AVPMVDMenuBar.app", hidden: false}'; then
@@ -33,12 +36,4 @@ else
     echo "Warning: Could not add application to Login Items. This might be due to missing Automation/System Events permissions, or running in a headless terminal."
 fi
 
-echo "Checking if AVPMVDMenuBar is running..."
-if ! pgrep -x "AVPMVDMenuBar" > /dev/null; then
-    echo "Starting AVPMVDMenuBar..."
-    open "/Applications/AVPMVDMenuBar.app"
-else
-    echo "AVPMVDMenuBar is already running."
-fi
-
-echo "Successfully installed AVPMVDMenuBar.app to /Applications."
+echo "Successfully installed and started AVPMVDMenuBar.app."

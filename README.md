@@ -30,19 +30,15 @@ A native macOS menu bar utility built in SwiftUI that displays whether your Mac 
 - macOS 14.0 or newer.
 - Xcode 15+ or Xcode Command Line Tools.
 
-## Compilation & Usage
+## Compilation & Installation
 
 1. Open your terminal in the project root:
    ```bash
    cd ~/code/avp-mvd-menu-bar
    ```
-2. Build the project in release mode:
+2. Run the installation script:
    ```bash
-   swift build -c release
-   ```
-3. Run the compiled executable in the background:
-   ```bash
-   ./.build/release/AVPMVDMenuBar &
+   ./scripts/install.sh
    ```
 
-*(Optionally, you can run `./package.sh` to package it into `.build/release/AVPMVDMenuBar.app` and launch it with `open .build/release/AVPMVDMenuBar.app`).*
+This will automatically package the application, terminate any running instances, install it to `/Applications/AVPMVDMenuBar.app`, launch the utility, and register it to start automatically upon system login.

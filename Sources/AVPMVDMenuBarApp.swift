@@ -4,7 +4,7 @@ import AppKit
 @main
 struct AVPMVDMenuBarApp: App {
     @StateObject private var watcher = AVPMVDWatcher()
-    private let appVersion = "v9"
+    private let appVersion = "v10"
     
     init() {
         // Dynamically hide Dock icon and run only in the menu bar
