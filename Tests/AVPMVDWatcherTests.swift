@@ -254,16 +254,5 @@ final class AVPMVDWatcherTests: XCTestCase {
         XCTAssertTrue(script.contains("screen-mirroring-device-Sidecar"))
     }
     
-    func testDisconnectMVDScriptExecution() async {
-        await bonjourBrowser.triggerUpdate(true, name: "TestVisionPro")
-        
-        watcher.disconnectMVD()
-        
-        XCTAssertEqual(scriptExecutor.executedScripts.count, 1)
-        let script = scriptExecutor.executedScripts.first ?? ""
-        XCTAssertTrue(script.contains("controlcenter-screen-mirroring"))
-        XCTAssertTrue(script.contains("TestVisionPro"))
-        XCTAssertTrue(script.contains("screen-mirroring-device-Sidecar"))
-        XCTAssertTrue(script.contains("cbValue is 1")) // Disconnect script checks for checked state
-    }
+
 }

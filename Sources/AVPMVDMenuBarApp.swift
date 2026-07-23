@@ -41,11 +41,7 @@ struct AVPMVDMenuBarApp: App {
             
             // Vision Pro Status Item
             if watcher.isMVDConnected {
-                Button {
-                    watcher.disconnectMVD()
-                } label: {
-                    Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Vision Pro: Connected (MVD) (Click to Disconnect)")
-                }
+                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Vision Pro: Connected (MVD)")
             } else if watcher.isVisionProOnline {
                 Button {
                     watcher.connectMVD()
