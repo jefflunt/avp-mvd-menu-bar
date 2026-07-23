@@ -43,7 +43,7 @@ cat <<EOF > "$CONTENTS_DIR/Info.plist"
     <key>CFBundleShortVersionString</key>
     <string>1.0.0</string>
     <key>CFBundleVersion</key>
-    <string>10</string>
+    <string>11</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>LSUIElement</key>
@@ -54,6 +54,15 @@ cat <<EOF > "$CONTENTS_DIR/Info.plist"
     <string>NSApplication</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>This utility checks Bluetooth status to verify if your Mac is ready to host a Mac Virtual Display session.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>This utility scans the local network via Bonjour to detect if an Apple Vision Pro is online and available.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_airplay._tcp</string>
+        <string>_companion-link._tcp</string>
+    </array>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>This utility automates Control Center to connect to your Apple Vision Pro for Mac Virtual Display.</string>
 </dict>
 </plist>
 EOF
