@@ -1,10 +1,11 @@
 import SwiftUI
 import AppKit
+import AVPMVDCore
 
 @main
 struct AVPMVDMenuBarApp: App {
     @StateObject private var watcher = AVPMVDWatcher()
-    private let appVersion = "v11"
+    private let appVersion = "v12"
     
     init() {
         // Dynamically hide Dock icon and run only in the menu bar
@@ -40,13 +41,19 @@ struct AVPMVDMenuBarApp: App {
             
             // Vision Pro Status Item
             if watcher.isMVDConnected {
-                Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Vision Pro: Connected (MVD)")
+                Button {
+                    watcher.disconnectMVD()
+                } label: {
+                    Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Vision Pro: Connected (MVD) (Click to Disconnect)")
+                }
+                .keyboardShortcut("d", modifiers: [.command, .option])
             } else if watcher.isVisionProOnline {
                 Button {
                     watcher.connectMVD()
                 } label: {
                     Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.blue)) Vision Pro: Detected (Click to Connect)")
                 }
+                .keyboardShortcut("c", modifiers: [.command, .option])
             } else {
                 Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.gray)) Vision Pro: Not Detected")
             }
