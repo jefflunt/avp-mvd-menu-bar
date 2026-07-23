@@ -46,7 +46,6 @@ struct AVPMVDMenuBarApp: App {
                 } label: {
                     Text("\(Text(Image(systemName: "circle.fill")).foregroundColor(.green)) Vision Pro: Connected (MVD) (Click to Disconnect)")
                 }
-                .keyboardShortcut("d", modifiers: [.command, .option])
             } else if watcher.isVisionProOnline {
                 Button {
                     watcher.connectMVD()

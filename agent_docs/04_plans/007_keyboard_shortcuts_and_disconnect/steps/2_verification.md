@@ -6,6 +6,6 @@
 3. Build and sign the application package using `./scripts/package.sh`.
 4. Open the packaged menu bar application.
 5. Manually verify the behavior under the following states:
-   - **AVP Not Detected**: Neither shortcut (⌥⌘C nor ⌥⌘D) should be active or triggered.
-   - **AVP Detected, Not Connected**: Pressing `⌥⌘C` should trigger the connection script (`connectMVD`). `⌥⌘D` should not do anything.
-   - **AVP Connected**: Pressing `⌥⌘D` should trigger the disconnection script (`disconnectMVD`). `⌥⌘C` should not do anything.
+   - **AVP Not Detected**: Neither shortcut (⌥⌘C nor ⌥⌘D) should be active or triggered (even with the dropdown closed).
+   - **AVP Detected, Not Connected**: Pressing `⌥⌘C` (with the dropdown closed) should trigger the connection script (`connectMVD`). `⌥⌘D` should not do anything.
+   - **AVP Connected**: Pressing `⌥⌘D` (with the dropdown closed) should trigger the disconnection script (`disconnectMVD`). `⌥⌘C` should not do anything.

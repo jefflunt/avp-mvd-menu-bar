@@ -9,11 +9,9 @@
 3. Move real implementations into wrapper classes satisfying these protocols.
 4. Modify `AVPMVDWatcher` constructor to accept these dependencies with default arguments of the production wrapper classes.
 5. In `AVPMVDWatcher.swift`, implement `disconnectMVD()` using the `ScriptExecutor` dependency.
-6. Replace the static connected status label in `Sources/AVPMVDMenuBarApp.swift` with a `Button` linking to `watcher.disconnectMVD()`.
-7. Add `.keyboardShortcut("c", modifiers: [.command, .option])` for connecting, and `.keyboardShortcut("d", modifiers: [.command, .option])` for disconnecting, to their respective buttons in `Sources/AVPMVDMenuBarApp.swift`.
-8. Create `Tests/AVPMVDWatcherTests.swift` and implement mock versions of all protocols.
-9. Implement unit tests for:
-   - State updates when individual services (Bluetooth, Wifi, Keychain, Bonjour discovery, MVD screen connection) toggle.
-   - Menu bar icon logic for all combinations.
-   - Connection/Disconnection AppleScript execution parameter/body verification.
-   - Last check time formatted string accuracy.
+6. In `Sources/AVPMVDWatcher.swift`, implement `GlobalHotKeyManager` wrapper that registers `⌥⌘C` (key code 8) and `⌥⌘D` (key code 2) using Carbon's `RegisterEventHotKey` API.
+7. Initialize `GlobalHotKeyManager` in `AVPMVDWatcher.init()` and bind callbacks to `connectMVD` and `disconnectMVD` guarded by their respective active status requirements.
+8. Replace the static connected status label in `Sources/AVPMVDMenuBarApp.swift` with a `Button` linking to `watcher.disconnectMVD()`.
+9. Add `.keyboardShortcut("c", modifiers: [.command, .option])` for connecting, and `.keyboardShortcut("d", modifiers: [.command, .option])` for disconnecting, to their respective buttons in `Sources/AVPMVDMenuBarApp.swift`.
+10. Create `Tests/AVPMVDWatcherTests.swift` and implement mock versions of all protocols.
+11. Implement unit tests for all state updates, icon logic, and mock script executions.

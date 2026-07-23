@@ -6,6 +6,7 @@ import Security
 import CoreBluetooth
 import Network
 import AppKit
+import Carbon
 
 // MARK: - Protocols for Testability
 
@@ -402,6 +403,108 @@ public class RealScriptExecutor: ScriptExecutor {
     }
 }
 
+// MARK: - Global Hotkey Manager
+
+@MainActor
+public class GlobalHotKeyManager {
+    public static let shared = GlobalHotKeyManager()
+    
+    private var connectHotKeyRef: EventHotKeyRef?
+    private var eventHandlerRef: EventHandlerRef?
+    private var onConnectPressed: (() -> Void)?
+    
+    private init() {}
+    
+    private static func makeOSType(_ string: String) -> OSType {
+        var result: UInt32 = 0
+        for char in string.utf8.prefix(4) {
+            result = (result << 8) + UInt32(char)
+        }
+        return result
+    }
+    
+    public func registerConnectHotKey(onConnect: @escaping () -> Void) {
+        // Bypass registering keyboard handlers if running in a test suite
+        if NSClassFromString("XCTestCase") != nil {
+            return
+        }
+        
+        self.onConnectPressed = onConnect
+        
+        // 1. Install Event Handler
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        
+        let handlerProc: EventHandlerProcPtr = { nextHandler, event, userData in
+            guard let event = event else { return OSStatus(eventNotHandledErr) }
+            var hotKeyID = EventHotKeyID()
+            let status = GetEventParameter(
+                event,
+                EventParamName(kEventParamDirectObject),
+                EventParamType(typeEventHotKeyID),
+                nil,
+                MemoryLayout<EventHotKeyID>.size,
+                nil,
+                &hotKeyID
+            )
+            
+            if status == noErr {
+                let id = hotKeyID.id
+                Task { @MainActor in
+                    GlobalHotKeyManager.shared.triggerHotKey(id: id)
+                }
+                return noErr
+            }
+            return OSStatus(eventNotHandledErr)
+        }
+        
+        let installStatus = InstallEventHandler(
+            GetApplicationEventTarget(),
+            handlerProc,
+            1,
+            &eventType,
+            nil,
+            &eventHandlerRef
+        )
+        
+        if installStatus != noErr {
+            print("Failed to install global hotkey event handler: \(installStatus)")
+            return
+        }
+        
+        // 2. Register Connect Hotkey: Option + Command + C
+        // Key code for 'C' is 8
+        // Modifiers: cmdKey (256) | optionKey (2048) = 2304
+        let signature = Self.makeOSType("AVPc")
+        let connectID = EventHotKeyID(signature: signature, id: 1)
+        let connectStatus = RegisterEventHotKey(
+            UInt32(8),
+            UInt32(2304),
+            connectID,
+            GetApplicationEventTarget(),
+            0,
+            &connectHotKeyRef
+        )
+        if connectStatus != noErr {
+            print("Failed to register Connect global hotkey: \(connectStatus)")
+        }
+    }
+    
+    private func triggerHotKey(id: UInt32) {
+        if id == 1 {
+            onConnectPressed?()
+        }
+    }
+    
+    deinit {
+        if let ref = connectHotKeyRef {
+            UnregisterEventHotKey(ref)
+        }
+        if let ref = eventHandlerRef {
+            RemoveEventHandler(ref)
+        }
+    }
+}
+
 // MARK: - Core Watcher
 
 @MainActor
@@ -462,6 +565,15 @@ public class AVPMVDWatcher: ObservableObject {
         self.scriptExecutor = scriptExecutor
         
         setupObservers()
+        
+        // Register global connect hotkey
+        GlobalHotKeyManager.shared.registerConnectHotKey { [weak self] in
+            guard let self = self else { return }
+            // Only works when detected but not yet connected
+            if self.isVisionProOnline && !self.isMVDConnected {
+                self.connectMVD()
+            }
+        }
         
         // Trigger initial check immediately
         Task {
